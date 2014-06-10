@@ -8,10 +8,12 @@
 
 #import "AMMessageComposerVC.h"
 #import "AMMessageCell.h"
-
 #import "UIColor+AMPresence.h"
+#import "TTTTimeIntervalFormatter.h"
 
 #define MESSAGE_COMPOSER_HEIGHT 40.0
+
+#define kACMessageTableCellIdentifierFormat @"ACMessageCell-Type:%d-Sent:%@-Delivered:%@"
 
 @interface AMMessageComposerVC ()<UITableViewDataSource, UITableViewDelegate,
                             UITextViewDelegate>
@@ -21,6 +23,7 @@
 @property (nonatomic, strong) UITextView *messageTextView;
 @property (nonatomic, strong) UIButton *sendButton;
 @property (nonatomic, strong) UIButton *cameraButton;
+@property (nonatomic, strong) TTTTimeIntervalFormatter *timeFormatter;
 
 @end
 
@@ -39,6 +42,11 @@
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view.
+    
+    _timeFormatter = [[TTTTimeIntervalFormatter alloc] init];
+    self.timeFormatter.significantUnits = NSYearCalendarUnit | NSMonthCalendarUnit | NSWeekCalendarUnit | NSDayCalendarUnit | NSHourCalendarUnit | NSMinuteCalendarUnit | NSSecondCalendarUnit;
+    self.timeFormatter.usesAbbreviatedCalendarUnits = YES;
+    self.timeFormatter.leastSignificantUnit = NSMinuteCalendarUnit;
     
     self.view.backgroundColor = [UIColor whiteColor];
     
@@ -340,15 +348,14 @@
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    AMMessageCell *cell = [tableView dequeueReusableCellWithIdentifier:@"cell"];
-    if (cell == nil)
+    AMMessageCell *cell;
+    /*
+     SENT or RECEIVED message
+     */
+    BOOL isSentMessage = NO;
+    if ([self.amDataSource respondsToSelector:@selector(isCurrentUserSentMessageAtIndexPath:)])
     {
-        cell = [[AMMessageCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"cell"];
-        cell.selectionStyle = UITableViewCellSelectionStyleNone;
-        cell.contentView.backgroundColor = [UIColor colorWithRed:239.0/255.0
-                                                           green:239.0/255.0
-                                                            blue:239.0/255.0
-                                                           alpha:1.0];
+        isSentMessage = [self.amDataSource isCurrentUserSentMessageAtIndexPath:indexPath];
     }
     
     /*
@@ -359,10 +366,21 @@
     {
         type = [self.amDataSource typeOfTheMessage:indexPath];
     }
+    NSString *cellIdentifier = [NSString stringWithFormat:kACMessageTableCellIdentifierFormat,
+                                type,
+                                (isSentMessage ? @"1" : @"0"),
+                                @"0"];
+    cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
+    if (cell == nil)
+    {
+        cell = [[AMMessageCell alloc] initWithStyle:UITableViewCellStyleDefault
+                                    reuseIdentifier:cellIdentifier];
+    }
     
     if (type == AMMessageCellTypeText)
     {
-//         Text Message
+        //         Text Message
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
         
         if ([self.amDataSource respondsToSelector:@selector(textForTheRowAtIndexPath:)])
         {
@@ -373,18 +391,24 @@
     }
     else if (type == AMMessageCellTypeImage)
     {
-//         Image Message
+        //         Image Message
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
         
         if ([self.amDataSource respondsToSelector:@selector(imageForTheRowAtIndexPath:)])
         {
-            cell.messageImage = [self.amDataSource imageForTheRowAtIndexPath:indexPath];
+            UIImage *image = [self.amDataSource imageForTheRowAtIndexPath:indexPath];
+            cell.messageImage = [UIImage imageWithCGImage:[image CGImage]
+                                                    scale:1.0
+                                              orientation: UIImageOrientationUp];
             cell.messageLbl.text = nil;
             cell.messageVideoPath = nil;
         }
     }
     else if (type == AMMessageCellTypeVideo)
     {
-//         Video Message
+        //         Video Message
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        
         if ([self.amDataSource respondsToSelector:@selector(videoPathForTheRowAtIndexPath:)])
         {
             cell.messageVideoPath = [self.amDataSource videoPathForTheRowAtIndexPath:indexPath];
@@ -394,12 +418,25 @@
         
     }
     
+    cell.isSentMessage = isSentMessage;
+    cell.contentView.backgroundColor = [UIColor colorWithRed:239.0/255.0
+                                                       green:239.0/255.0
+                                                        blue:239.0/255.0
+                                                       alpha:1.0];
+    
     /*
      Time Stamp
      */
     if ([self.amDataSource respondsToSelector:@selector(timeStampForRowAtIndexPath:)])
     {
-        cell.messageSentTimeLbl.text = [self.amDataSource timeStampForRowAtIndexPath:indexPath].description;
+        NSDate *date = [self.amDataSource timeStampForRowAtIndexPath:indexPath];
+        
+        NSString *timestampText = [self.timeFormatter stringForTimeIntervalFromDate:[NSDate date]
+                                                                             toDate:date];
+        if (timestampText.length == 0) {
+            timestampText = @"just now";
+        }
+        cell.messageSentTimeLbl.text = timestampText;
     }
     
     /*
@@ -418,14 +455,8 @@
         cell.userAvatarImgView.image = [self.amDataSource userAvatarForRowAtIndexPath:indexPath];
     }
     
-    /*
-     SENT or RECEIVED message
-     */
-    if ([self.amDataSource respondsToSelector:@selector(isCurrentUserSentMessageAtIndexPath:)])
-    {
-        cell.isSentMessage = [self.amDataSource isCurrentUserSentMessageAtIndexPath:indexPath];
-    }
-    
+    [cell setNeedsUpdateConstraints];
+    [cell updateConstraintsIfNeeded];
     return cell;
 }
 
@@ -435,7 +466,7 @@
     AMMessageCell *cell = (AMMessageCell *)[tableView cellForRowAtIndexPath:indexPath];
     if (cell.messageVideoPath.length > 0)
     {
-        [cell playOrStopVideo];
+        [cell playOrPauseVideo];
     }
 }
 

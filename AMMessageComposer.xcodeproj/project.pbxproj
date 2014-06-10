@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		531F127D191CE85600433DB4 /* AMCodeSnippet.m in Sources */ = {isa = PBXBuildFile; fileRef = 531F127C191CE85600433DB4 /* AMCodeSnippet.m */; };
+		539F4AFA1946D2F30025A0B9 /* UIView+AutoLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = 539F4AF81946D2F30025A0B9 /* UIView+AutoLayout.m */; };
+		539F4AFE1946DA690025A0B9 /* TTTTimeIntervalFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 539F4AFD1946DA690025A0B9 /* TTTTimeIntervalFormatter.m */; };
 		53AD467E18AA7CE5003058E5 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53AD467D18AA7CE5003058E5 /* Foundation.framework */; };
 		53AD468018AA7CE5003058E5 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53AD467F18AA7CE5003058E5 /* CoreGraphics.framework */; };
 		53AD468218AA7CE5003058E5 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53AD468118AA7CE5003058E5 /* UIKit.framework */; };
@@ -50,8 +51,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		531F127B191CE85600433DB4 /* AMCodeSnippet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AMCodeSnippet.h; sourceTree = "<group>"; };
-		531F127C191CE85600433DB4 /* AMCodeSnippet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AMCodeSnippet.m; sourceTree = "<group>"; };
+		539F4AF81946D2F30025A0B9 /* UIView+AutoLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+AutoLayout.m"; sourceTree = "<group>"; };
+		539F4AF91946D2F30025A0B9 /* UIView+AutoLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+AutoLayout.h"; sourceTree = "<group>"; };
+		539F4AFC1946DA690025A0B9 /* TTTTimeIntervalFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TTTTimeIntervalFormatter.h; sourceTree = "<group>"; };
+		539F4AFD1946DA690025A0B9 /* TTTTimeIntervalFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TTTTimeIntervalFormatter.m; sourceTree = "<group>"; };
 		53AD467A18AA7CE5003058E5 /* AMMessageComposer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AMMessageComposer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		53AD467D18AA7CE5003058E5 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		53AD467F18AA7CE5003058E5 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -116,6 +119,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		539F4AFB1946DA690025A0B9 /* TimeFormater */ = {
+			isa = PBXGroup;
+			children = (
+				539F4AFC1946DA690025A0B9 /* TTTTimeIntervalFormatter.h */,
+				539F4AFD1946DA690025A0B9 /* TTTTimeIntervalFormatter.m */,
+			);
+			path = TimeFormater;
+			sourceTree = "<group>";
+		};
 		53AD467118AA7CE5003058E5 = {
 			isa = PBXGroup;
 			children = (
@@ -205,6 +217,8 @@
 		53AD46D818AA828D003058E5 /* AMExtensions */ = {
 			isa = PBXGroup;
 			children = (
+				539F4AF81946D2F30025A0B9 /* UIView+AutoLayout.m */,
+				539F4AF91946D2F30025A0B9 /* UIView+AutoLayout.h */,
 				53AD46D918AA828D003058E5 /* UIColor+AMPresence.h */,
 				53AD46DA18AA828D003058E5 /* UIColor+AMPresence.m */,
 				53AD46DB18AA828D003058E5 /* UIImage+Stretchable.h */,
@@ -216,10 +230,9 @@
 		53AD46DD18AA828D003058E5 /* AMMessageComposer */ = {
 			isa = PBXGroup;
 			children = (
+				539F4AFB1946DA690025A0B9 /* TimeFormater */,
 				53AD46DE18AA828D003058E5 /* AMMessageCell.h */,
 				53AD46DF18AA828D003058E5 /* AMMessageCell.m */,
-				531F127B191CE85600433DB4 /* AMCodeSnippet.h */,
-				531F127C191CE85600433DB4 /* AMCodeSnippet.m */,
 				53AD46E018AA828D003058E5 /* AMMessageComposerVC.h */,
 				53AD46E118AA828D003058E5 /* AMMessageComposerVC.m */,
 			);
@@ -351,12 +364,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				53AD46EE18AA828D003058E5 /* UIImage+Stretchable.m in Sources */,
+				539F4AFA1946D2F30025A0B9 /* UIView+AutoLayout.m in Sources */,
 				53AD46D218AA7D3C003058E5 /* ViewController.m in Sources */,
 				53AD468E18AA7CE5003058E5 /* AppDelegate.m in Sources */,
 				53AD46ED18AA828D003058E5 /* UIColor+AMPresence.m in Sources */,
 				53AD46F018AA828D003058E5 /* AMMessageComposerVC.m in Sources */,
 				53AD468A18AA7CE5003058E5 /* main.m in Sources */,
-				531F127D191CE85600433DB4 /* AMCodeSnippet.m in Sources */,
+				539F4AFE1946DA690025A0B9 /* TTTTimeIntervalFormatter.m in Sources */,
 				53AD46EF18AA828D003058E5 /* AMMessageCell.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

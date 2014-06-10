@@ -28,11 +28,6 @@
     [super viewDidLoad];
 	// Do any additional setup after loading the view.
     
-    NSString *string = @"AWchat - secure messaging";
-    NSData *stringData = [string dataUsingEncoding:NSUTF8StringEncoding];
-    
-    NSLog(@"%@",stringData);
-    
     self.amDataSource = self;
     self.amDelegate = self;
 }

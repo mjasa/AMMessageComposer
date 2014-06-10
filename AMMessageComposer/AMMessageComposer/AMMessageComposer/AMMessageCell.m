@@ -9,8 +9,41 @@
 #import "AMMessageCell.h"
 #import "UIImage+Stretchable.h"
 #import <MediaPlayer/MediaPlayer.h>
+#import "UIView+AutoLayout.h"
 
 #define THUMBNAIL_IMAGE_AT_TIME_INTERVEL 5.0
+
+#define kUserResendInfoLabelVerticalInset       2.0f
+#define kUserResendInfoLabelSizeWidth           80.0f
+#define kUserResendInfoLabelSizeHeight          14.0f
+
+#define kMessageDeliveryStatusLabelHorizontalInset  6.0f
+#define kMessageDeliveryStatusLabelVerticalInset    4.0f
+#define kMessageDeliveryStatusLabelSizeWidth        50.0f
+#define kMessageDeliveryStatusLabelSizeHeight       14.0f
+
+#define kUserAvatarBgImgViewHorizontalInset   10.0f
+#define kUserAvatarBgImgViewVerticalInset     2.0f
+#define kUserAvatarBgImgSizeWidth             38.0f
+#define kUserAvatarBgImgSizeHeight            38.0f
+
+#define kUserNameViewVerticalInset              4.0f
+#define kUserNameViewSizeHeight                 14.0f
+#define kUserNameViewHoriWidthMargin            5.0f
+
+#define kMessageTimeLabelHorizontalInset    10.0
+#define kMessageTimeLabelVerticalInset      2.0
+#define kMessageTimeLabelSizeWidth          100.0
+#define kMessageTimeLabelSizeHeight         14.0
+
+#define kMessageBgImgViewHorizontalMargin    5.0f
+#define kMessageBgImgViewVerticalOffset      3.0f
+
+#define kMessageLabelHorizontalOffset        7.0f
+#define kMessageLabelVerticalOffset          4.0f
+
+#define kMultimediaMessageHorizontalInset   6.0f
+#define kMultimediaMessageVerticalInset     6.0f
 
 @interface AMMessageCell()
 
@@ -19,6 +52,8 @@
 @property (nonatomic, strong) MPMoviePlayerController *moviePlayerController;
 @property (nonatomic, strong) UIImage *videoThumbImage;
 @property (nonatomic, strong) UIImageView *videoThumbImageView;
+@property (nonatomic, assign) BOOL didSetUpSentConstraints;
+@property (nonatomic, assign) BOOL didSetUpReceivedConstraints;
 
 @end
 
@@ -44,58 +79,434 @@
 #pragma mark - UI utility
 -(void) setUI
 {
-    // user
-    UIImageView *userAvatar = [[UIImageView alloc] initWithFrame:CGRectZero];
-    [self.contentView addSubview:userAvatar];
-    self.userAvatarImgView = userAvatar;
+    self.contentView.backgroundColor = [UIColor whiteColor];
+    [self.contentView.layer setOpaque:YES];
     
-    UILabel *userNameLbl = [[UILabel alloc] initWithFrame:CGRectZero];
+    //    user status - user imageBackgroud view
+    UIView *userImgBgView = [UIView newAutoLayoutView];
+    userImgBgView.backgroundColor = [UIColor redColor];
+    userImgBgView.layer.cornerRadius = kUserAvatarBgImgSizeHeight/2.0;
+    [self.contentView addSubview:userImgBgView];
+    self.userAvatarBgView = userImgBgView;
+    [self.userAvatarBgView setHidden:YES];
+    
+    //    user
+    UIImageView *userImgView = [UIImageView newAutoLayoutView];
+    userImgView.layer.cornerRadius = (kUserAvatarBgImgSizeHeight-2)/2.0;
+//    userImgView.layer.borderWidth = 2.0;
+//    userImgView.layer.borderColor = [UIColor whiteColor].CGColor;
+    [userImgView setBackgroundColor:[UIColor clearColor]];
+    [self.contentView addSubview:userImgView];
+    self.userAvatarImgView = userImgView;
+    
+    //    user name
+    UILabel *userNameLbl = [UILabel newAutoLayoutView];
     userNameLbl.backgroundColor = [UIColor clearColor];
     userNameLbl.textColor = [UIColor colorWithRed:99.0/255.0 green:99.0/255.0 blue:99.0/255.0 alpha:1.0];
-    [userNameLbl setFont:[UIFont fontWithName:@"Helvetica-Bold" size:12.0]];
-    userNameLbl.textAlignment = NSTextAlignmentCenter;
+    [userNameLbl setFont:[UIFont fontWithName:@"Helvetica" size:12.0]];
+    [userNameLbl setTextAlignment:NSTextAlignmentCenter];
     [self.contentView addSubview:userNameLbl];
     self.userNameLbl = userNameLbl;
     
-    // message sent time
-    UILabel *messageSentTimeLbl = [[UILabel alloc] initWithFrame:CGRectZero];
-    messageSentTimeLbl.backgroundColor = [UIColor clearColor];
-    messageSentTimeLbl.textColor = [UIColor colorWithRed:150.0/255.0 green:150.0/255.0 blue:154.0/255.0
-                                                alpha:1.0];
-    [messageSentTimeLbl setFont:[UIFont fontWithName:@"Helvetica-Bold" size:12.0]];
-    [self.contentView addSubview:messageSentTimeLbl];
-    self.messageSentTimeLbl = messageSentTimeLbl;
+    //message delivery status
+    UILabel *messageDeliveryStatusLabel = [UILabel newAutoLayoutView];
+    messageDeliveryStatusLabel.backgroundColor = [UIColor clearColor];
+    messageDeliveryStatusLabel.textColor = [UIColor lightGrayColor];//[UIColor colorWithRed:220.0/255.0 green:220.0/255.0 blue:220.0/255.0 alpha:1.0];
+    [messageDeliveryStatusLabel setFont:[UIFont fontWithName:@"Helvetica" size:10.0]];
+    [messageDeliveryStatusLabel setTextAlignment:NSTextAlignmentCenter];
+    [self.contentView addSubview:messageDeliveryStatusLabel];
+    self.messageDeliveryStatusLabel = messageDeliveryStatusLabel;
     
-    // message view
-    UIImageView *messageBgView = [[UIImageView alloc] initWithFrame:CGRectZero];
+    //    message back ground
+    UIImageView *messageBgView = [UIImageView newAutoLayoutView];
+    [messageBgView setUserInteractionEnabled:YES];
     [self.contentView addSubview:messageBgView];
+    [self.messageBgView setBackgroundColor:[UIColor redColor]];
     self.messageBgView = messageBgView;
     
-    UILabel *messageLbl = [[UILabel alloc] initWithFrame:CGRectZero];
+    //    message sent/received time
+    UILabel *messageTimeLabel = [UILabel newAutoLayoutView];
+    messageTimeLabel.backgroundColor = [UIColor clearColor];
+    messageTimeLabel.textColor = [UIColor lightGrayColor];
+    [messageTimeLabel setFont:[UIFont fontWithName:@"Helvetica-Bold" size:12.0]];
+    [self.contentView addSubview:messageTimeLabel];
+    self.messageSentTimeLbl = messageTimeLabel;
+    
+    //    text message
+    UILabel *messageLbl = [UILabel newAutoLayoutView];
     messageLbl.backgroundColor = [UIColor clearColor];
-    messageLbl.numberOfLines = 0;
     [messageLbl setFont:[UIFont fontWithName:@"Helvetica" size:12.0]];
+    messageLbl.numberOfLines = 0;
     messageLbl.lineBreakMode = NSLineBreakByWordWrapping;
     [self.contentView addSubview:messageLbl];
     self.messageLbl = messageLbl;
     
-    // imageview
-    UIImageView *messageImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
-    [self.contentView addSubview:messageImageView];
-    self.messageImageView = messageImageView;
+    //    image message
+    UIImageView *messageImgView = [UIImageView newAutoLayoutView];
+    [self.messageBgView addSubview:messageImgView];
+    self.messageImageView = messageImgView;
     
-    // media player
+    //    video message
     MPMoviePlayerController *moviePlayerController = [[MPMoviePlayerController alloc] init];
     [moviePlayerController setControlStyle:MPMovieControlStyleEmbedded];
     [moviePlayerController setScalingMode:MPMovieScalingModeAspectFit];
     [moviePlayerController setMovieSourceType:MPMovieSourceTypeFile];
     [moviePlayerController prepareToPlay];
-    [self.contentView addSubview:moviePlayerController.view];
+    [self.messageBgView addSubview:moviePlayerController.view];
     self.moviePlayerController = moviePlayerController;
     
-    UIImageView *thumbImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
-    [self.contentView addSubview:thumbImageView];
-    self.videoThumbImageView = thumbImageView;
+    UIImageView *videoThumbnailImgView = [UIImageView newAutoLayoutView];
+    videoThumbnailImgView.backgroundColor = [UIColor clearColor];
+    [videoThumbnailImgView setUserInteractionEnabled:YES];
+    [self.messageBgView addSubview:videoThumbnailImgView];
+    self.videoThumbImageView = videoThumbnailImgView;
+    UITapGestureRecognizer *tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self
+                                                                                           action:@selector(playOrPauseVideo)];
+    [self.videoThumbImageView addGestureRecognizer:tapGestureRecognizer];
+}
+
+-(void) updateConstraints
+{
+    [super updateConstraints];
+    
+    if (self.isSentMessage)
+    {
+        if (self.didSetUpSentConstraints) {
+            return;
+        }
+        
+        // Message Delivery status
+        [self.messageDeliveryStatusLabel autoPinEdgeToSuperviewEdge:ALEdgeTop
+                                                          withInset:kMessageDeliveryStatusLabelVerticalInset];
+        [self.messageDeliveryStatusLabel autoPinEdgeToSuperviewEdge:ALEdgeRight
+                                                          withInset:kMessageDeliveryStatusLabelHorizontalInset];
+        [self.messageDeliveryStatusLabel autoSetDimension:ALDimensionWidth
+                                                   toSize:kMessageDeliveryStatusLabelSizeWidth];
+        [self.messageDeliveryStatusLabel autoSetDimension:ALDimensionHeight
+                                                   toSize:kMessageDeliveryStatusLabelSizeHeight];
+        self.messageDeliveryStatusLabel.textAlignment = NSTextAlignmentCenter;
+        
+        //    user Avatar Background Image
+        [self.userAvatarBgView autoPinEdgeToSuperviewEdge:ALEdgeRight
+                                                withInset:kUserAvatarBgImgViewHorizontalInset];
+        [self.userAvatarBgView autoPinEdge:ALEdgeTop
+                                    toEdge:ALEdgeTop
+                                    ofView:self.messageBgView
+                                withOffset:kUserAvatarBgImgViewVerticalInset];
+        [self.userAvatarBgView autoSetDimension:ALDimensionWidth
+                                         toSize:kUserAvatarBgImgSizeWidth];
+        [self.userAvatarBgView autoSetDimension:ALDimensionHeight
+                                         toSize:kUserAvatarBgImgSizeHeight];
+        
+        //    user Avatar Image
+        [self.userAvatarImgView autoPinEdge:ALEdgeRight
+                                     toEdge:ALEdgeRight
+                                     ofView:self.userAvatarBgView
+                                 withOffset:1];
+        [self.userAvatarImgView autoPinEdge:ALEdgeTop
+                                     toEdge:ALEdgeTop
+                                     ofView:self.userAvatarBgView
+                                 withOffset:1];
+        [self.userAvatarImgView autoSetDimension:ALDimensionWidth
+                                          toSize:kUserAvatarBgImgSizeWidth-1];
+        [self.userAvatarImgView autoSetDimension:ALDimensionHeight
+                                          toSize:kUserAvatarBgImgSizeHeight-1];
+        
+        //    user Name Label
+        [self.userNameLbl autoPinEdge:ALEdgeRight
+                               toEdge:ALEdgeRight
+                               ofView:self.userAvatarBgView
+                           withOffset:kUserNameViewHoriWidthMargin];
+        [self.userNameLbl autoPinEdge:ALEdgeTop
+                               toEdge:ALEdgeBottom
+                               ofView:self.userAvatarBgView
+                           withOffset:kUserNameViewVerticalInset];
+        [self.userNameLbl autoSetDimension:ALDimensionWidth
+                                    toSize:kUserAvatarBgImgSizeWidth + (2 * kUserNameViewHoriWidthMargin)];
+        [self.userNameLbl autoSetDimension:ALDimensionHeight
+                                    toSize:kUserNameViewSizeHeight];
+        
+        //        message sent time
+        [self.messageSentTimeLbl autoPinEdgeToSuperviewEdge:ALEdgeTop
+                                                  withInset:kMessageTimeLabelVerticalInset];
+        [self.messageSentTimeLbl autoPinEdgeToSuperviewEdge:ALEdgeLeft
+                                                  withInset:kMessageTimeLabelHorizontalInset];
+        [self.messageSentTimeLbl autoSetDimension:ALDimensionWidth
+                                           toSize:kMessageTimeLabelSizeWidth];
+        [self.messageSentTimeLbl autoSetDimension:ALDimensionHeight
+                                           toSize:kMessageTimeLabelSizeHeight];
+        self.messageSentTimeLbl.textAlignment = NSTextAlignmentLeft;
+        
+        //    message background view
+        [self.messageBgView setContentCompressionResistancePriority:UILayoutPriorityRequired
+                                                            forAxis:UILayoutConstraintAxisVertical];
+        [self.messageBgView autoPinEdge:ALEdgeTop
+                                 toEdge:ALEdgeBottom
+                                 ofView:self.messageSentTimeLbl
+                             withOffset:kMessageBgImgViewVerticalOffset];
+        
+        
+        [self.messageBgView autoPinEdge:ALEdgeRight
+                                 toEdge:ALEdgeLeft
+                                 ofView:self.userAvatarImgView
+                             withOffset:-kMessageBgImgViewHorizontalMargin];
+        
+        NSString *msgBubbleImagName = nil;
+        msgBubbleImagName = @"bg_chatmessage";
+        self.messageLbl.alpha = 1.0;
+        self.messageBgView.image = [UIImage stretchableImageWithName:msgBubbleImagName
+                                                           extension:@"png"
+                                                              topCap:20
+                                                             leftCap:8
+                                                           bottomCap:13
+                                                         andRightCap:26];
+        
+        if (self.messageLbl.text.length >0)
+        {
+            //            text message
+            [self.messageLbl setContentCompressionResistancePriority:UILayoutPriorityRequired
+                                                             forAxis:UILayoutConstraintAxisVertical];
+            [self.messageLbl autoPinEdge:ALEdgeTop
+                                  toEdge:ALEdgeTop
+                                  ofView:self.messageBgView
+                              withOffset:kMessageLabelVerticalOffset];
+            [self.messageLbl autoPinEdge:ALEdgeLeft
+                                  toEdge:ALEdgeLeft
+                                  ofView:self.messageBgView
+                              withOffset:kMessageLabelHorizontalOffset];
+            
+            CGSize messageSize = [self getSizeforText:self.messageLbl.text];
+            int numOfLines = messageSize.height/13.8;
+            [self.messageLbl autoSetDimension:ALDimensionWidth toSize:messageSize.width+2.0];
+            [self.messageLbl autoSetDimension:ALDimensionHeight toSize:messageSize.height+numOfLines];
+            
+            [self.messageBgView autoSetDimension:ALDimensionHeight toSize:messageSize.height+12.0];
+            [self.messageBgView autoSetDimension:ALDimensionWidth toSize:messageSize.width+20.0];
+        }
+        else if(self.messageImage != nil)
+        {
+            //            image message
+            [self.messageImageView autoPinEdgeToSuperviewEdge:ALEdgeLeft
+                                                    withInset:kMultimediaMessageHorizontalInset];
+            [self.messageImageView autoPinEdgeToSuperviewEdge:ALEdgeTop
+                                                    withInset:kMultimediaMessageVerticalInset];
+            
+            CGSize imageSize = self.messageImage.size;
+            imageSize.height = [[self class] getImageHeight:self.messageImage];
+            
+            if (imageSize.width > MAXIMUM_IMAGE_SIZE_WIDHT)
+                imageSize.width = MAXIMUM_IMAGE_SIZE_WIDHT;
+            
+            //            imageSize.width = MAXIMUM_IMAGE_SIZE_WIDTH;
+            //            imageSize.height = MAXIMUM_IMAGE_SIZE_HEIGHT;
+            
+            [self.messageImageView autoSetDimension:ALDimensionWidth toSize:imageSize.width];
+            [self.messageImageView autoSetDimension:ALDimensionHeight toSize:imageSize.height];
+            
+            self.messageImageView.image = self.messageImage;
+            
+            [self.messageBgView autoSetDimension:ALDimensionWidth toSize:imageSize.width+18.0];
+            [self.messageBgView autoSetDimension:ALDimensionHeight toSize:imageSize.height+16.0];
+        }
+        else if (self.messageVideoPath != nil && self.messageVideoPath.length > 0)
+        {
+            //            video message
+            [self.videoThumbImageView autoPinEdgeToSuperviewEdge:ALEdgeLeft
+                                                       withInset:kMultimediaMessageHorizontalInset];
+            [self.videoThumbImageView autoPinEdgeToSuperviewEdge:ALEdgeTop
+                                                       withInset:kMultimediaMessageVerticalInset];
+            [self.videoThumbImageView autoSetDimension:ALDimensionWidth
+                                                toSize:VIDEO_FRAME_WIDTH];
+            [self.videoThumbImageView autoSetDimension:ALDimensionHeight
+                                                toSize:VIDEO_FRAME_HEIGHT];
+            
+            self.moviePlayerController.view.frame = CGRectMake(kMultimediaMessageHorizontalInset,
+                                                               kMultimediaMessageVerticalInset,
+                                                               VIDEO_FRAME_WIDTH,
+                                                               VIDEO_FRAME_HEIGHT);
+            
+            [self.messageBgView autoSetDimension:ALDimensionWidth
+                                          toSize:VIDEO_FRAME_WIDTH+18.0];
+            [self.messageBgView autoSetDimension:ALDimensionHeight
+                                          toSize:VIDEO_FRAME_HEIGHT+16.0];
+            
+            [self.moviePlayerController setContentURL:[NSURL fileURLWithPath:self.messageVideoPath]];
+            [self.moviePlayerController prepareToPlay];
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(handleThumbnailImageRequestFinishNotification:) name:MPMoviePlayerThumbnailImageRequestDidFinishNotification
+                                                       object:self.moviePlayerController];
+            [self.moviePlayerController requestThumbnailImagesAtTimes:@[[NSNumber numberWithFloat:THUMBNAIL_IMAGE_AT_TIME_INTERVEL]]
+                                                           timeOption:MPMovieTimeOptionNearestKeyFrame];
+        }
+        self.didSetUpSentConstraints = YES;
+    }
+    else
+    {
+        if (self.didSetUpReceivedConstraints) {
+            return;
+        }
+        
+        //    user Avatar Background Image
+        [self.userAvatarBgView autoPinEdgeToSuperviewEdge:ALEdgeLeft
+                                                withInset:kUserAvatarBgImgViewHorizontalInset];
+        [self.userAvatarBgView autoPinEdge:ALEdgeTop
+                                    toEdge:ALEdgeTop
+                                    ofView:self.messageBgView
+                                withOffset:kUserAvatarBgImgViewVerticalInset];
+        [self.userAvatarBgView autoSetDimension:ALDimensionWidth
+                                         toSize:kUserAvatarBgImgSizeWidth];
+        [self.userAvatarBgView autoSetDimension:ALDimensionHeight
+                                         toSize:kUserAvatarBgImgSizeHeight];
+        
+        //    user Avatar Image
+        [self.userAvatarImgView autoPinEdge:ALEdgeLeft
+                                     toEdge:ALEdgeLeft
+                                     ofView:self.userAvatarBgView
+                                 withOffset:1];
+        [self.userAvatarImgView autoPinEdge:ALEdgeTop
+                                     toEdge:ALEdgeTop
+                                     ofView:self.userAvatarBgView
+                                 withOffset:1];
+        [self.userAvatarImgView autoSetDimension:ALDimensionWidth
+                                          toSize:kUserAvatarBgImgSizeWidth-1];
+        [self.userAvatarImgView autoSetDimension:ALDimensionHeight
+                                          toSize:kUserAvatarBgImgSizeHeight-1];
+        
+        
+        //    user Name Label
+        [self.userNameLbl autoPinEdge:ALEdgeLeft
+                               toEdge:ALEdgeLeft
+                               ofView:self.userAvatarBgView
+                           withOffset:-kUserNameViewHoriWidthMargin];
+        [self.userNameLbl autoPinEdge:ALEdgeTop
+                               toEdge:ALEdgeBottom
+                               ofView:self.userAvatarBgView
+                           withOffset:kUserNameViewVerticalInset];
+        [self.userNameLbl autoSetDimension:ALDimensionWidth
+                                    toSize:kUserAvatarBgImgSizeWidth + (2 * kUserNameViewHoriWidthMargin)];
+        [self.userNameLbl autoSetDimension:ALDimensionHeight
+                                    toSize:kUserNameViewSizeHeight];
+        
+        //        message sent time
+        [self.messageSentTimeLbl autoPinEdgeToSuperviewEdge:ALEdgeTop
+                                                  withInset:kMessageTimeLabelVerticalInset];
+        [self.messageSentTimeLbl autoPinEdgeToSuperviewEdge:ALEdgeRight
+                                                  withInset:kMessageTimeLabelHorizontalInset];
+        [self.messageSentTimeLbl autoSetDimension:ALDimensionWidth
+                                           toSize:kMessageTimeLabelSizeWidth];
+        [self.messageSentTimeLbl autoSetDimension:ALDimensionHeight
+                                           toSize:kMessageTimeLabelSizeHeight];
+        self.messageSentTimeLbl.textAlignment = NSTextAlignmentRight;
+        
+        //    message background view
+        [self.messageBgView setContentCompressionResistancePriority:UILayoutPriorityRequired
+                                                            forAxis:UILayoutConstraintAxisVertical];
+        [self.messageBgView autoPinEdge:ALEdgeTop
+                                 toEdge:ALEdgeBottom
+                                 ofView:self.messageSentTimeLbl
+                             withOffset:kMessageBgImgViewVerticalOffset];
+        
+        [self.messageBgView autoPinEdge:ALEdgeLeft
+                                 toEdge:ALEdgeRight
+                                 ofView:self.userAvatarImgView
+                             withOffset:kMessageBgImgViewHorizontalMargin];
+        
+        self.messageBgView.image = [UIImage stretchableImageWithName:@"bg_chatmessage_others"
+                                                           extension:@"png"
+                                                              topCap:22
+                                                             leftCap:10
+                                                           bottomCap:13
+                                                         andRightCap:26];
+        
+        if (self.messageLbl.text.length >0)
+        {
+            //    text message Label
+            [self.messageLbl setContentCompressionResistancePriority:UILayoutPriorityRequired
+                                                             forAxis:UILayoutConstraintAxisVertical];
+            [self.messageLbl autoPinEdge:ALEdgeTop
+                                  toEdge:ALEdgeTop
+                                  ofView:self.messageBgView
+                              withOffset:kMessageLabelVerticalOffset];
+            
+            [self.messageLbl autoPinEdge:ALEdgeLeft
+                                  toEdge:ALEdgeLeft
+                                  ofView:self.messageBgView
+                              withOffset:5 + kMessageLabelHorizontalOffset];
+            
+            CGSize messageSize = [self getSizeforText:self.messageLbl.text];
+            [self.messageLbl autoSetDimension:ALDimensionWidth toSize:messageSize.width+2.0];
+            [self.messageLbl autoSetDimension:ALDimensionHeight toSize:messageSize.height+2.0];
+            
+            [self.messageBgView autoSetDimension:ALDimensionHeight toSize:messageSize.height+12.0];
+            [self.messageBgView autoSetDimension:ALDimensionWidth toSize:messageSize.width+20.0];
+        }
+        else if (self.messageImage != nil)
+        {
+            //            image message
+            [self.messageImageView autoPinEdgeToSuperviewEdge:ALEdgeLeft
+                                                    withInset:kMultimediaMessageHorizontalInset+5.0];
+            [self.messageImageView autoPinEdgeToSuperviewEdge:ALEdgeTop
+                                                    withInset:kMultimediaMessageVerticalInset];
+            
+            CGSize imageSize = self.messageImage.size;
+            imageSize.height = [[self class] getImageHeight:self.messageImage];
+            
+            if (imageSize.width > MAXIMUM_IMAGE_SIZE_WIDHT)
+                imageSize.width = MAXIMUM_IMAGE_SIZE_WIDHT;
+            
+            [self.messageImageView autoSetDimension:ALDimensionWidth toSize:imageSize.width];
+            [self.messageImageView autoSetDimension:ALDimensionHeight toSize:imageSize.height];
+            
+            self.messageImageView.image = self.messageImage;
+            
+            [self.messageBgView autoSetDimension:ALDimensionWidth toSize:imageSize.width+18.0];
+            [self.messageBgView autoSetDimension:ALDimensionHeight toSize:imageSize.height+16.0];
+        }
+        else if (self.messageVideoPath != nil && self.messageVideoPath.length > 0)
+        {
+            //            video message
+            [self.videoThumbImageView autoPinEdgeToSuperviewEdge:ALEdgeLeft
+                                                       withInset:kMultimediaMessageHorizontalInset+6.0];
+            [self.videoThumbImageView autoPinEdgeToSuperviewEdge:ALEdgeTop
+                                                       withInset:kMultimediaMessageVerticalInset];
+            [self.videoThumbImageView autoSetDimension:ALDimensionWidth toSize:VIDEO_FRAME_WIDTH];
+            [self.videoThumbImageView autoSetDimension:ALDimensionHeight toSize:VIDEO_FRAME_HEIGHT];
+            
+            self.moviePlayerController.view.frame = CGRectMake(kMultimediaMessageHorizontalInset+6.0,
+                                                               kMultimediaMessageVerticalInset,
+                                                               VIDEO_FRAME_WIDTH,
+                                                               VIDEO_FRAME_HEIGHT);
+            
+            [self.messageBgView autoSetDimension:ALDimensionWidth toSize:VIDEO_FRAME_WIDTH+18.0];
+            [self.messageBgView autoSetDimension:ALDimensionHeight toSize:VIDEO_FRAME_HEIGHT+16.0];
+            
+            [self.moviePlayerController setContentURL:[NSURL fileURLWithPath:self.messageVideoPath]];
+            [self.moviePlayerController prepareToPlay];
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(handleThumbnailImageRequestFinishNotification:) name:MPMoviePlayerThumbnailImageRequestDidFinishNotification
+                                                       object:self.moviePlayerController];
+            [self.moviePlayerController requestThumbnailImagesAtTimes:@[[NSNumber numberWithFloat:THUMBNAIL_IMAGE_AT_TIME_INTERVEL]]
+                                                           timeOption:MPMovieTimeOptionNearestKeyFrame];
+        }
+        self.didSetUpReceivedConstraints = YES;
+    }
+}
+
+-(void) layoutSubviews
+{
+    [super layoutSubviews];
+    [self.contentView setNeedsDisplay];
+    [self.contentView layoutIfNeeded];
+    
+    self.messageLbl.preferredMaxLayoutWidth = CGRectGetWidth(self.messageLbl.frame);
+}
+
+-(void) prepareForReuse
+{
+    [super prepareForReuse];
+    [self.contentView autoRemoveConstraintsAffectingViewAndSubviews];
+    self.didSetUpReceivedConstraints = NO;
+    self.didSetUpSentConstraints = NO;
 }
 
 -(void) handleThumbnailImageRequestFinishNotification:(NSNotification*)notifiation
@@ -111,251 +522,7 @@
     {
         self.videoThumbImageView.image = [userinfo valueForKey:MPMoviePlayerThumbnailImageKey];
         [self.moviePlayerController stop];
-    }
-}
-
--(void) layoutSubviews
-{
-    [super layoutSubviews];
-    
-    if (self.isSentMessage)
-    {
-        // my message
-        self.userAvatarImgView.frame = CGRectMake(CGRectGetMaxX(self.contentView.frame) - 64.0,
-                                                  CGRectGetMinY(self.contentView.frame) + 16.0,
-                                                  60.0,
-                                                  60.0);
-        self.userAvatarImgView.layer.cornerRadius = CGRectGetHeight(self.userAvatarImgView.frame)/2.0;
-        
-        self.userNameLbl.frame = CGRectMake(CGRectGetMinX(self.userAvatarImgView.frame),
-                                            CGRectGetMaxY(self.userAvatarImgView.frame)+2.0,
-                                            CGRectGetWidth(self.userAvatarImgView.frame),
-                                            12.0);
-        self.messageSentTimeLbl.frame = CGRectMake(CGRectGetMinX(self.contentView.frame) + 10.0,
-                                                   CGRectGetMinY(self.contentView.frame) + 14.0,
-                                                   CGRectGetWidth(self.contentView.frame) - 20.0,
-                                                   12.0);
-        self.messageSentTimeLbl.textAlignment = NSTextAlignmentLeft;
-        
-        if (self.messageImage == nil && self.messageVideoPath.length == 0)
-        {
-            CGSize messageSize = [self getSizeforText:self.messageLbl.text];
-            
-            self.messageBgView.frame = CGRectMake(CGRectGetMaxX(self.contentView.frame) - messageSize.width - 100.0,
-                                                  CGRectGetMinY(self.contentView.frame) + 30.0,
-                                                  messageSize.width + 30.0,
-                                                  messageSize.height + 14.0);
-            
-            self.messageLbl.frame = CGRectMake(CGRectGetMinX(self.messageBgView.frame) + 10.0,
-                                               CGRectGetMinY(self.messageBgView.frame) + 5.0,
-                                               messageSize.width, messageSize.height);
-            
-            [self.messageLbl setHidden:NO];
-            [self.moviePlayerController.view setHidden:YES];
-            [self.videoThumbImageView setHidden:YES];
-            [self.messageImageView setHidden:YES];
-            
-            self.messageBgView.image = [UIImage stretchableImageWithName:@"bg_chatmessage"
-                                                               extension:@"png"
-                                                                  topCap:20
-                                                                 leftCap:8
-                                                               bottomCap:13
-                                                             andRightCap:26];
-        }
-        else if(self.messageImage != nil && self.messageVideoPath.length == 0)
-        {
-            // image message
-            
-            CGSize imageSize = self.messageImage.size;
-            if (imageSize.height > MAXIMUM_IMAGE_SIZE_HEIGHT)
-                imageSize.height = MAXIMUM_IMAGE_SIZE_HEIGHT;
-            if (imageSize.width > MAXIMUM_IMAGE_SIZE_WIDHT)
-                imageSize.width = MAXIMUM_IMAGE_SIZE_WIDHT;
-            
-            self.messageBgView.frame = CGRectMake(CGRectGetMaxX(self.contentView.frame) - imageSize.width - 90.0,
-                                                  CGRectGetMinY(self.contentView.frame) + 30.0,
-                                                  imageSize.width + 18.0,
-                                                  imageSize.height + 14.0);
-            
-            self.messageBgView.image = [UIImage stretchableImageWithName:@"bg_chatmessage"
-                                                               extension:@"png"
-                                                                  topCap:20
-                                                                 leftCap:8
-                                                               bottomCap:13
-                                                             andRightCap:26];
-            
-            [self.messageLbl setHidden:YES];
-            [self.moviePlayerController.view setHidden:YES];
-            [self.videoThumbImageView setHidden:YES];
-            [self.messageImageView setHidden:NO];
-            
-            self.messageImageView.frame = CGRectMake(CGRectGetMinX(self.messageBgView.frame) + 6.0,
-                                                     CGRectGetMinY(self.messageBgView.frame) + 5.0,
-                                                     imageSize.width,
-                                                     imageSize.height);
-            
-            self.messageImageView.image = self.messageImage;
-        }
-        else
-        {
-            // video message
-            
-            CGSize videoSize = CGSizeMake(MAXIMUM_IMAGE_SIZE_WIDHT, MAXIMUM_IMAGE_SIZE_HEIGHT);
-            
-            self.messageBgView.frame = CGRectMake(CGRectGetMaxX(self.contentView.frame) - videoSize.width - 90.0,
-                                                  CGRectGetMinY(self.contentView.frame) + 30.0,
-                                                  videoSize.width + 18.0,
-                                                  videoSize.height + 14.0);
-            
-            self.messageBgView.image = [UIImage stretchableImageWithName:@"bg_chatmessage"
-                                                               extension:@"png"
-                                                                  topCap:20
-                                                                 leftCap:8
-                                                               bottomCap:13
-                                                             andRightCap:26];
-            
-            self.moviePlayerController.view.frame = CGRectMake(CGRectGetMinX(self.messageBgView.frame) + 6.0,
-                                                               CGRectGetMinY(self.messageBgView.frame) + 5.0,
-                                                               videoSize.width,
-                                                               videoSize.height);
-            NSURL *fileUrl = [NSURL fileURLWithPath:self.messageVideoPath];
-            [self.moviePlayerController setContentURL:fileUrl];
-            [self.moviePlayerController prepareToPlay];
-            
-            [[NSNotificationCenter defaultCenter] addObserver:self
-                                                     selector:@selector(handleThumbnailImageRequestFinishNotification:) name:MPMoviePlayerThumbnailImageRequestDidFinishNotification
-                                                       object:self.moviePlayerController];
-            
-            self.videoThumbImageView.frame = CGRectMake(CGRectGetMinX(self.messageBgView.frame) + 6.0,
-                                                        CGRectGetMinY(self.messageBgView.frame) + 5.0,
-                                                        videoSize.width,
-                                                        videoSize.height);
-            
-            [self.moviePlayerController requestThumbnailImagesAtTimes:@[[NSNumber numberWithFloat:THUMBNAIL_IMAGE_AT_TIME_INTERVEL]]
-                                                           timeOption:MPMovieTimeOptionNearestKeyFrame];
-            
-            [self.messageLbl setHidden:YES];
-            [self.messageImageView setHidden:YES];
-            [self.moviePlayerController.view setHidden:YES];
-            [self.videoThumbImageView setHidden:NO];
-        }
-    }
-    else
-    {
-        self.userAvatarImgView.frame = CGRectMake(CGRectGetMinX(self.contentView.frame) + 4.0,
-                                                  CGRectGetMinY(self.contentView.frame) + 16.0,
-                                                  60.0,
-                                                  60.0);
-        self.userAvatarImgView.layer.cornerRadius = CGRectGetHeight(self.userAvatarImgView.frame)/2.0;
-        
-        self.userNameLbl.frame = CGRectMake(CGRectGetMinX(self.userAvatarImgView.frame),
-                                            CGRectGetMaxY(self.userAvatarImgView.frame)+2.0,
-                                            CGRectGetWidth(self.userAvatarImgView.frame),
-                                            12.0);
-        self.messageSentTimeLbl.frame = CGRectMake(CGRectGetMinX(self.contentView.frame) + 10.0,
-                                                   CGRectGetMinY(self.contentView.frame) + 14.0,
-                                                   CGRectGetWidth(self.contentView.frame) - 20.0,
-                                                   12.0);
-        self.messageSentTimeLbl.textAlignment = NSTextAlignmentRight;
-        
-        if (self.messageImage == nil && self.messageVideoPath.length == 0)
-        {
-            CGSize messageSize = [self getSizeforText:self.messageLbl.text];
-            self.messageBgView.frame = CGRectMake(CGRectGetMinX(self.contentView.frame) + 70.0,
-                                                  CGRectGetMinY(self.contentView.frame) + 30.0,
-                                                  messageSize.width + 30.0,
-                                                  messageSize.height + 14.0);
-            
-            self.messageLbl.frame = CGRectMake(CGRectGetMinX(self.messageBgView.frame) + 15.0,
-                                               CGRectGetMinY(self.messageBgView.frame) + 5.0,
-                                               messageSize.width,
-                                               messageSize.height);
-            
-            [self.messageLbl setHidden:NO];
-            [self.messageImageView setHidden:YES];
-            [self.videoThumbImageView setHidden:YES];
-            [self.moviePlayerController.view setHidden:YES];
-            
-            self.messageBgView.image = [UIImage stretchableImageWithName:@"bg_chatmessage_others"
-                                                               extension:@"png"
-                                                                  topCap:22
-                                                                 leftCap:10
-                                                               bottomCap:13
-                                                             andRightCap:26];
-        }
-        else if(self.messageVideoPath.length == 0)
-        {
-            CGSize imageSize = self.messageImage.size;
-            if (imageSize.height > MAXIMUM_IMAGE_SIZE_HEIGHT)
-                imageSize.height = MAXIMUM_IMAGE_SIZE_HEIGHT;
-            if (imageSize.width > MAXIMUM_IMAGE_SIZE_WIDHT)
-                imageSize.width = MAXIMUM_IMAGE_SIZE_WIDHT;
-            
-            self.messageBgView.frame = CGRectMake(CGRectGetMinX(self.contentView.frame) + 70.0,
-                                                  CGRectGetMinY(self.contentView.frame) + 30.0,
-                                                  imageSize.width + 18.0,
-                                                  imageSize.height + 14.0);
-            
-            self.messageBgView.image = [UIImage stretchableImageWithName:@"bg_chatmessage_others"
-                                                               extension:@"png"
-                                                                  topCap:22
-                                                                 leftCap:10
-                                                               bottomCap:13
-                                                             andRightCap:26];
-            
-            [self.messageLbl setHidden:YES];
-            [self.moviePlayerController.view setHidden:YES];
-            [self.videoThumbImageView setHidden:YES];
-            [self.messageImageView setHidden:NO];
-            
-            self.messageImageView.frame = CGRectMake(CGRectGetMinX(self.messageBgView.frame)+12.0,
-                                                     CGRectGetMinY(self.messageBgView.frame) + 5.0,
-                                                     imageSize.width,
-                                                     imageSize.height);
-            self.messageImageView.image = self.messageImage;
-        }
-        else
-        {
-            // video message
-            
-            CGSize videoSize = CGSizeMake(MAXIMUM_IMAGE_SIZE_WIDHT, MAXIMUM_IMAGE_SIZE_HEIGHT);
-            
-            self.messageBgView.frame = CGRectMake(CGRectGetMaxX(self.contentView.frame) + 70.0,
-                                                  CGRectGetMinY(self.contentView.frame) + 30.0,
-                                                  videoSize.width + 18.0,
-                                                  videoSize.height + 14.0);
-            
-            self.messageBgView.image = [UIImage stretchableImageWithName:@"bg_chatmessage_others"
-                                                               extension:@"png"
-                                                                  topCap:22
-                                                                 leftCap:10
-                                                               bottomCap:13
-                                                             andRightCap:26];
-            
-            self.moviePlayerController.view.frame = CGRectMake(CGRectGetMinX(self.messageBgView.frame) + 12.0,
-                                                               CGRectGetMinY(self.messageBgView.frame) + 5.0,
-                                                               videoSize.width,
-                                                               videoSize.height);
-            NSURL *fileUrl = [NSURL fileURLWithPath:self.messageVideoPath];
-            [self.moviePlayerController setContentURL:fileUrl];
-            [self.moviePlayerController prepareToPlay];
-            
-            [[NSNotificationCenter defaultCenter] addObserver:self
-                                                     selector:@selector(handleThumbnailImageRequestFinishNotification:) name:MPMoviePlayerThumbnailImageRequestDidFinishNotification
-                                                       object:self.moviePlayerController];
-            
-            self.videoThumbImageView.frame = CGRectMake(CGRectGetMinX(self.messageBgView.frame) + 12.0,
-                                                        CGRectGetMinY(self.messageBgView.frame) + 5.0,
-                                                        videoSize.width,
-                                                        videoSize.height);
-            [self.moviePlayerController requestThumbnailImagesAtTimes:@[[NSNumber numberWithFloat:THUMBNAIL_IMAGE_AT_TIME_INTERVEL]]
-                                                           timeOption:MPMovieTimeOptionNearestKeyFrame];
-            
-            [self.messageLbl setHidden:YES];
-            [self.messageImageView setHidden:YES];
-            [self.moviePlayerController.view setHidden:YES];
-            [self.videoThumbImageView setHidden:NO];
-        }
+        [self.moviePlayerController.view setHidden:YES];
     }
 }
 
@@ -381,11 +548,23 @@
     }
 }
 
--(void) playOrStopVideo
+-(void) playOrPauseVideo
 {
     [self.videoThumbImageView setHidden:YES];
     [self.moviePlayerController.view setHidden:NO];
     [self.moviePlayerController play];
+}
+
++(CGFloat) getImageHeight:(UIImage *)image
+{
+    if (image.size.width > MAXIMUM_IMAGE_SIZE_WIDHT)
+    {
+        CGFloat scallingFactor = MAXIMUM_IMAGE_SIZE_WIDHT / image.size.width;
+        CGFloat imageHeight = image.size.height * scallingFactor;
+        return ceilf(imageHeight);
+    }
+    else
+        return image.size.height;
 }
 
 @end

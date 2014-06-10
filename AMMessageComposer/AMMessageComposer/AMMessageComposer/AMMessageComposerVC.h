@@ -113,16 +113,6 @@ typedef enum {
  */
 -(NSInteger) numberOfMessages;
 
-@optional
-
-/*  User Presence state
- *
- *  @param indexPath - Row index path of message tableView
- *
- *  @return AMMessageUserPresenceType - presence type of the message sent user
- */
--(AMMessageUserPresenceType) userPresenceStateOfMessageAtIndexPath:(NSIndexPath *)indexPath;
-
 @end
 
 @protocol AMMessageComposerDelegate <NSObject>

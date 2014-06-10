@@ -49,9 +49,10 @@
 @property (nonatomic, strong) UILabel *messageLbl;
 @property (nonatomic, strong) UIImage *messageImage;
 @property (nonatomic, strong) NSString *messageVideoPath;
-
+@property (nonatomic, strong) UILabel *messageDeliveryStatusLabel;
+@property (nonatomic, strong) UIView *userAvatarBgView;
 @property (nonatomic, assign) BOOL isSentMessage;
 
--(void) playOrStopVideo;
+-(void) playOrPauseVideo;
 
 @end
